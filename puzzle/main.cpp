@@ -4,6 +4,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "getopt.hpp"
 #include "siftdata.hpp"
+#include "utility.hpp"
 
 #ifdef _DEBUG
 #define RETURN(x)	system("pause"); return (x); // it helps on debuging
@@ -48,7 +49,7 @@ int main(const int argc, char *const argv[]) {
 	vector<Mat> img_puzzles;
 	for (; optind < argc; optind++) {
 		clog << "load puzzle image: " << argv[optind] << endl;
-		
+
 		auto img = imread(argv[optind]);
 		if (img.empty()) {
 			continue;
@@ -101,9 +102,13 @@ int main(const int argc, char *const argv[]) {
 	clog.put('.');
 
 	vector<Mat> aff_puzzle_to_target;
+
 	for (auto& dat : dat_puzzles) {
+		// get affine matrix
 		Mat affine;
 		dat.align_to(dat_sample, affine);
+
+		// save affine matrix
 		aff_puzzle_to_target.push_back(aff_sample_to_target * affine);
 
 		clog.put('.');
@@ -113,8 +118,20 @@ int main(const int argc, char *const argv[]) {
 
 #pragma endregion
 
-	// output
+#pragma region puzzle!
+	assert(img_puzzles.size() == aff_puzzle_to_target.size());
 
-	clog << "done!" << endl;
+	Mat result(img_target);
+	for (int i = 0; i < img_puzzles.size(); i++) {
+		projectImage(aff_puzzle_to_target[i], img_puzzles[i], result);
+	}
+
+#pragma endregion
+
+	// output
+	imshow("result", result);
+	clog << "done! press any key to continue" << endl;
+	waitKey();
+
 	RETURN(0);
 }

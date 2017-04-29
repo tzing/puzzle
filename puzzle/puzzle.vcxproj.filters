@@ -30,6 +30,9 @@
     <ClCompile Include="knn.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
+    <ClCompile Include="utility.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="getopt.hpp">
@@ -42,6 +45,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="knn.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="utility.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

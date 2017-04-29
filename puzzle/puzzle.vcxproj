@@ -124,12 +124,14 @@
     <ClCompile Include="siftdata.cpp" />
     <ClCompile Include="getopt.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="knn.hpp" />
     <ClInclude Include="ransac.hpp" />
     <ClInclude Include="siftdata.hpp" />
     <ClInclude Include="getopt.hpp" />
+    <ClInclude Include="utility.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -28,9 +28,6 @@ SiftData::SiftData(InputArray image) {
 	assert(!image.empty());
 
 	gExtractor->detectAndCompute(image, noArray(), _keypoints, _descriptor);
-
-	_image = image.getMat();
-	_size = _keypoints.size();
 }
 
 /*
@@ -48,8 +45,9 @@ void SiftData::align_to(SiftData& target, OutputArray affine) {
 
 	// calc knn
 	vector<IdxPair> neighbors;
-	knn(target._descriptor, (*this)._descriptor, neighbors);
+	knn((*this)._descriptor, target._descriptor, neighbors);
 
 	// run ransac
 	ransac(neighbors, (*this)._keypoints, target._keypoints, affine);
 }
+

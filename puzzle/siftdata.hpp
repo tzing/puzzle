@@ -15,12 +15,9 @@ public:
 
 	~SiftData();
 
-	void align_to(SiftData& target, OutputArray affine);
+	void align_to(SiftData& target, cv::OutputArray affine);
 
 private:
-	int _size = 0;
-
-	cv::Mat _image;
 	cv::Mat _descriptor;
 	std::vector<cv::KeyPoint> _keypoints;
 };

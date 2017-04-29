@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <ctime>
+#include "utility.hpp"
 
 #define RANSAC_ROUND			(1000)				// round of RANSAC
 
@@ -98,20 +99,14 @@ void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPo
 		Mat pt_tar_test;
 		get_selected_points(vector<IdxPair>(knn_pairs.begin() + NUM_REQ_HOMOGRAPHY + 1, knn_pairs.end()), kp_base, kp_target, pt_base_test, pt_tar_test);
 
-		// - add column with scalar 1
-		Mat pt_base_extended(pt_base_test.rows, 3, CV_32FC1);
-		pt_base_test.copyTo(pt_base_extended(Rect(0, 0, 2, pt_base_test.rows)));
-		pt_base_extended.col(2).setTo(1);
-
-		// - project & normalized
-		auto pt_base_projected = affine * pt_base_extended.t();
-		auto pt_base_normalized = pt_base_projected(Rect(0, 0, pt_base_extended.rows, 2)) / repeat(pt_base_projected.row(2), 2, 1);
-
+		Mat pt_projected;
+		projectPts(affine, pt_base_test, pt_projected);
+		
 		// - compare with target
-		auto diff = pt_base_normalized.t() - pt_tar_test;
+		auto diff = pt_projected - pt_tar_test;
 
 		int score = 0;
-		for (int i = 0; i < pt_base_extended.rows; i++) {
+		for (int i = 0; i < pt_projected.rows; i++) {
 			if (norm(diff.row(i)) < THRESHOLD_GOODRESULT) {
 				score++;
 			}
