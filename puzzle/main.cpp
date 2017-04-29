@@ -3,6 +3,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "getopt.hpp"
+#include "siftdata.hpp"
 
 #ifdef _DEBUG
 #define RETURN(x)	system("pause"); return (x); // it helps on debuging
@@ -19,7 +20,7 @@ using namespace cv;
  *	usage:
  */
 int main(const int argc, char *const argv[]) {
-	// parse arguments & input data
+#pragma region parse arguments & read data
 	Mat img_sample;
 	Mat img_target;
 	string filename_output;
@@ -27,20 +28,17 @@ int main(const int argc, char *const argv[]) {
 	int opt_char;
 	while ((opt_char = getopt(argc, argv, "s:t:o:")) != -1) {
 		switch (opt_char) {
-		// sample image
-		case 's':
+		case 's': // sample image
 			clog << "load sample image: " << optarg << endl;
 			img_sample = imread(optarg);
 			break;
 
-		// target image
-		case 't':
+		case 't': // target image
 			clog << "load target image: " << optarg << endl;
 			img_target = imread(optarg);
 			break;
 
-		// output filename
-		case 'o':
+		case 'o': // output filename
 			clog << "set output filename: " << optarg << endl;
 			filename_output = optarg;
 			break;
@@ -50,7 +48,13 @@ int main(const int argc, char *const argv[]) {
 	vector<Mat> img_puzzles;
 	for (; optind < argc; optind++) {
 		clog << "load puzzle image: " << argv[optind] << endl;
-		img_puzzles.push_back(imread(argv[optind]));
+		
+		auto img = imread(argv[optind]);
+		if (img.empty()) {
+			continue;
+		}
+
+		img_puzzles.push_back(img);
 	}
 
 	// anit-foolish
@@ -68,6 +72,41 @@ int main(const int argc, char *const argv[]) {
 		cerr << "no puzzle image assigned." << endl;
 		RETURN(2);
 	}
+
+#pragma endregion
+
+#pragma region feature extraction
+	clog << "extracting feature";
+	SiftData dat_sample(img_sample);
+	clog.put('.');
+
+	SiftData dat_target(img_target);
+	clog.put('.');
+
+	vector<SiftData> dat_puzzles;
+	for (auto& img : img_puzzles) {
+		dat_puzzles.push_back(SiftData(img));
+		clog.put('.');
+	}
+
+	clog << endl;
+
+#pragma endregion
+
+#pragma region alignment
+	clog << "aligning";
+
+	dat_sample.align_to(dat_target);
+	clog.put('.');
+
+	for (auto& dat : dat_puzzles) {
+		dat.align_to(dat_sample);
+		clog.put('.');
+	}
+
+	clog << endl;
+
+#pragma endregion
 
 	// output
 

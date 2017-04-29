@@ -20,13 +20,13 @@ bool cmp_pair(IdxDistantPair a, IdxDistantPair b)
 /*
  *	K Nearest Neighbor algorithm
  */
-void knn(Mat& desp_base, Mat& desp_target, vector<KnnIdxPair>& knn_pairs) {
+void knn(Mat& desp_base, Mat& desp_target, vector<IdxPair>& knn_pairs) {
 #ifdef _DEBUG
-	clog << "KNN_START";
+	clog << "[KNN_START] ";
 	auto tic = clock();
 #endif
 
-	knn_pairs = vector<KnnIdxPair>(desp_base.rows * NUM_KNN);
+	knn_pairs = vector<IdxPair>(desp_base.rows * NUM_KNN);
 
 	// iter over each descriptor in base iamge
 	for (int i = 0, idx_in_knn_pair = 0; i < desp_base.rows; i++, idx_in_knn_pair += NUM_KNN) {
@@ -38,10 +38,7 @@ void knn(Mat& desp_base, Mat& desp_target, vector<KnnIdxPair>& knn_pairs) {
 			auto row_target = desp_target.row(j);
 
 			// calc distanct: SSE
-			Mat sq_diff;
-			pow(row_base - row_target, 2.0, sq_diff);
-
-			auto val = sum(sq_diff).val[0];
+			auto val = norm(row_base - row_target, NORM_L2);
 
 			// save distance
 			distants[j] = make_pair(j, val);
@@ -58,6 +55,6 @@ void knn(Mat& desp_base, Mat& desp_target, vector<KnnIdxPair>& knn_pairs) {
 
 #ifdef _DEBUG
 	auto toc = clock();
-	clog << "KNN_FINISH: " << (float)(toc - tic) / CLOCKS_PER_SEC << "sec elasped" << endl;
+	clog << "[KNN_FINISH] " << (float)(toc - tic) / CLOCKS_PER_SEC << "sec elasped" << endl;
 #endif
 }

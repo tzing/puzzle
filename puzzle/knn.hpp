@@ -2,6 +2,6 @@
 
 #include <opencv2/core/core.hpp>
 
-typedef std::pair<int, int> KnnIdxPair;
+typedef std::pair<int, int> IdxPair;
 
-void knn(cv::Mat& desp_base, cv::Mat& desp_target, std::vector<KnnIdxPair>& knn_pairs);
+void knn(cv::Mat& desp_base, cv::Mat& desp_target, std::vector<IdxPair>& knn_pairs);
