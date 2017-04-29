@@ -96,11 +96,16 @@ int main(const int argc, char *const argv[]) {
 #pragma region alignment
 	clog << "aligning";
 
-	dat_sample.align_to(dat_target);
+	Mat aff_sample_to_target;
+	dat_sample.align_to(dat_target, aff_sample_to_target);
 	clog.put('.');
 
+	vector<Mat> aff_puzzle_to_target;
 	for (auto& dat : dat_puzzles) {
-		dat.align_to(dat_sample);
+		Mat affine;
+		dat.align_to(dat_sample, affine);
+		aff_puzzle_to_target.push_back(aff_sample_to_target * affine);
+
 		clog.put('.');
 	}
 

@@ -42,16 +42,14 @@ SiftData::~SiftData() {
 
 #pragma endregion
 
-void SiftData::align_to(SiftData& base) {
+void SiftData::align_to(SiftData& target, OutputArray affine) {
 	assert(!is_empty);
-	assert(!base.is_empty);
+	assert(!target.is_empty);
 
 	// calc knn
 	vector<IdxPair> neighbors;
-	knn(base._descriptor, (*this)._descriptor, neighbors);
+	knn(target._descriptor, (*this)._descriptor, neighbors);
 
 	// run ransac
-	ransac(neighbors, base._keypoints, (*this)._keypoints, _affine);
+	ransac(neighbors, (*this)._keypoints, target._keypoints, affine);
 }
-
-
