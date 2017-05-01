@@ -71,8 +71,8 @@ void projectImage(InputArray _affine, InputArray _source, InputOutputArray _canv
 			continue;
 		}
 
-		int r_source = pts_on_source[0].y;
-		int c_source = pts_on_source[0].x;
+		int r_source = pts_on_source[i].y;
+		int c_source = pts_on_source[i].x;
 
 		canvas.at<Vec3b>(r_target, c_target) = source.at<Vec3b>(r_source, c_source);
 	}
