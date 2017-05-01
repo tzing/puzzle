@@ -10,7 +10,7 @@
 #define HOMOGRAPHY_H_HEIGHT (NUM_REQ_HOMOGRAPHY<<1)	// height of H when build homography
 #define HOMOGRAPHY_H_WIDTH		(9)					// width of H when build homography
 
-#define THRESHOLD_GOODRESULT	(15)				// distance less this threshold would consider as good match result
+#define THRESHOLD_GOODRESULT	(5)					// distance less this threshold would consider as good match result
 
 using namespace std;
 using namespace cv;

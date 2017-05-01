@@ -2,7 +2,7 @@
 #include <iostream>
 #include <ctime>
 
-#define NUM_KNN (3)		// knn中要取多少個
+#define NUM_KNN (1)		// num of k
 
 using namespace std;
 using namespace cv;
