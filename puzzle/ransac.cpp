@@ -32,16 +32,19 @@ void calc_homography(InputArray _kp_base, InputArray _kp_target, OutputArray aff
 	// build martix H
 	Mat H(HOMOGRAPHY_H_HEIGHT, HOMOGRAPHY_H_WIDTH, CV_32FC1);
 	for (int i = 0; i < NUM_REQ_HOMOGRAPHY; i++) {
+		// get x, y data
 		auto x1 = kp_base.at<float>(i, 0);
 		auto y1 = kp_base.at<float>(i, 1);
 		auto x2 = kp_target.at<float>(i, 0);
 		auto y2 = kp_target.at<float>(i, 1);
 
+		// build each row
 		float data[] = {
 			x1, y1, 1, 0, 0, 0, -x2*x1, -x2*y1, -x2,
 			0, 0, 0, x1, y1, 1, -y2*x1, -y2*y1, -y2
 		};
 
+		// assign to H
 		Mat(2, HOMOGRAPHY_H_WIDTH, CV_32FC1, data).copyTo(
 			H(Rect(0, i << 1, HOMOGRAPHY_H_WIDTH, 2))
 		);
@@ -57,7 +60,10 @@ void calc_homography(InputArray _kp_base, InputArray _kp_target, OutputArray aff
 		.copyTo(affine);
 }
 
-void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPoint>& kp_target, OutputArray best_affine) {
+/*
+ * ransac func
+ */
+void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPoint>& kp_target, OutputArray _best_affine, vector<IdxPair>& _selected_pair) {
 #ifdef _DEBUG
 	clog << "[RANSAC_START] ";
 	auto tic = clock();
@@ -68,11 +74,13 @@ void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPo
 	assert(kp_target.size() > 0);
 
 	// copy vector
-	vector<IdxPair> knn_pairs(_knn_pairs);
+	vector<IdxPair> selected_pairs;
+	Mat best_affine;
 
-	int best_score = -1;
+	#pragma omp parallel for
 	for (int round = 0; round < RANSAC_ROUND; round++) {
 		// random pick 4
+		vector<IdxPair> knn_pairs(_knn_pairs);
 		random_shuffle(knn_pairs.begin(), knn_pairs.end());
 
 		// calc homography
@@ -92,32 +100,44 @@ void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPo
 		calc_homography(pt_base_train, pt_tar_train, affine);
 
 		// proejct other points
-		Mat pt_base_test;
+		auto remainPts = vector<IdxPair>(knn_pairs.begin() + NUM_REQ_HOMOGRAPHY , knn_pairs.end());
+		auto getRemainPts = [&](vector<KeyPoint> _source, int get_idx(IdxPair)) {
+			return getPts(remainPts, _source, get_idx);
+		};
+
+		auto pt_base_test = getRemainPts(kp_base, IdxPair_::getBaseIdx);
+
 		Mat pt_tar_test;
-		get_selected_points(vector<IdxPair>(knn_pairs.begin() + NUM_REQ_HOMOGRAPHY + 1, knn_pairs.end()), kp_base, kp_target, pt_base_test, pt_tar_test);
+		ensurePtShape(getRemainPts(kp_target, IdxPair_::getTargetIdx), pt_tar_test);
 
 		Mat pt_projected;
 		projectPts(affine, pt_base_test, pt_projected);
-		
+
 		// - compare with target
 		auto diff = pt_projected - pt_tar_test;
 
-		int score = 0;
+		vector<IdxPair> pairs;
 		for (int i = 0; i < pt_projected.rows; i++) {
 			if (norm(diff.row(i)) < THRESHOLD_GOODRESULT) {
-				score++;
+				pairs.push_back(remainPts[i]);
 			}
 		}
 
 		// save best
-		if (score > best_score) {
-			best_score = score;
-			affine.copyTo(best_affine);
+		#pragma omp critical
+		{
+			if (pairs.size() > selected_pairs.size()) {
+				selected_pairs = pairs;
+				best_affine = affine;
+			}
 		}
 	}
 
+	best_affine.copyTo(_best_affine);
+	_selected_pair = selected_pairs;
+
 #ifdef _DEBUG
 	auto toc = clock();
-	clog << "[RANSAC_FINISH] " << (float)(toc - tic) / CLOCKS_PER_SEC << "sec elasped" << endl;
+	clog << "[RANSAC_FINISH] " << (float)(toc - tic) / CLOCKS_PER_SEC << "sec elasped, with score=" << selected_pairs.size() << " in " << _knn_pairs.size() << endl;
 #endif
 }
