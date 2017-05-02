@@ -16,25 +16,14 @@ using namespace std;
 using namespace cv;
 
 /*
- * assistnat func for get selected points from selected index array and orignial data array
- */
-inline void get_selected_points(vector<IdxPair>& selected_idx, vector<KeyPoint>& kp_base, vector<KeyPoint>& kp_target, OutputArray pt_base_selected, OutputArray pt_target_selected) {
-	vector<Point2f> pt_base(selected_idx.size());
-	vector<Point2f> pt_target(selected_idx.size());
-
-	for (int i = 0; i < selected_idx.size(); i++) {
-		pt_base[i] = kp_base[selected_idx[i].first].pt;
-		pt_target[i] = kp_target[selected_idx[i].second].pt;
-	}
-
-	Mat(pt_base).reshape(1).copyTo(pt_base_selected);
-	Mat(pt_target).reshape(1).copyTo(pt_target_selected);
-}
-
-/*
  *	calc homography
  */
-void calc_homography(Mat& kp_base, Mat& kp_target, OutputArray affine) {
+void calc_homography(InputArray _kp_base, InputArray _kp_target, OutputArray affine) {
+	// get points
+	Mat kp_base, kp_target;
+	ensurePtShape(_kp_base, kp_base);
+	ensurePtShape(_kp_target, kp_target);
+
 	assert(kp_base.rows == NUM_REQ_HOMOGRAPHY);
 	assert(kp_base.type() == CV_32FC1);
 	assert(kp_target.rows == NUM_REQ_HOMOGRAPHY);
@@ -87,9 +76,17 @@ void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPo
 		random_shuffle(knn_pairs.begin(), knn_pairs.end());
 
 		// calc homography
-		Mat pt_base_train;
-		Mat pt_tar_train;
-		get_selected_points(vector<IdxPair>(knn_pairs.begin(), knn_pairs.begin() + NUM_REQ_HOMOGRAPHY), kp_base, kp_target, pt_base_train, pt_tar_train);
+		auto getPts = [](vector<IdxPair> _idx_objects, vector<KeyPoint> _source, int get_idx(IdxPair)) {
+			return complexGet<IdxPair, KeyPoint, Point2f>(_idx_objects, _source, get_idx, [](KeyPoint kp) {return kp.pt; });
+		};
+
+		auto first4Pts = vector<IdxPair>(knn_pairs.begin(), knn_pairs.begin() + NUM_REQ_HOMOGRAPHY);
+		auto getFirst4Pts = [&](vector<KeyPoint> _source, int get_idx(IdxPair)) {
+			return getPts(first4Pts, _source, get_idx);
+		};
+
+		auto pt_base_train = getFirst4Pts(kp_base, IdxPair_::getBaseIdx);
+		auto pt_tar_train = getFirst4Pts(kp_target, IdxPair_::getTargetIdx);
 
 		Mat affine;
 		calc_homography(pt_base_train, pt_tar_train, affine);

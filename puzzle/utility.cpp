@@ -3,7 +3,25 @@
 using namespace std;
 using namespace cv;
 
-const Vec3b BLACK(0, 0, 0);
+static const Vec3b BLACK(0, 0, 0);
+
+/*
+ * reshape point matrix
+ */
+void ensurePtShape(InputArray _src, OutputArray _dest) {
+	Mat points = _src.getMat();
+
+	if (points.rows == 1) {
+		points = points.t();
+	}
+
+	if (points.channels() == 2) {
+		points = points.reshape(1);
+	}
+
+	assert(points.cols == 2);
+	points.copyTo(_dest);
+}
 
 /*
  *	project points using affine transform
@@ -19,12 +37,17 @@ void projectPts(InputArray _affine, InputArray _points, OutputArray _points_proj
 	assert(_affine.type() == CV_32FC1);
 	assert(_affine.rows() == 3);
 	assert(_affine.cols() == 3);
-	assert(_points.type() == CV_32FC1);
-	assert(_points.cols() == 2);
+
+	// reshape points
+	Mat points;
+	ensurePtShape(_points, points);
+
+	assert(points.type() == CV_32FC1);
+	assert(points.cols == 2);
 
 	// extend a column with scalar 1
-	Mat extended(_points.rows(), 3, CV_32FC1);
-	_points.copyTo(extended(Rect(0, 0, 2, extended.rows)));
+	Mat extended(points.rows, 3, CV_32FC1);
+	points.copyTo(extended(Rect(0, 0, 2, extended.rows)));
 	extended.col(2).setTo(1);
 
 	// affine transform
