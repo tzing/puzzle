@@ -9,6 +9,26 @@ using namespace cv;
 
 typedef pair<int, double> IdxDistantPair;
 
+IdxPair_::IdxPair_() :
+	this_idx(-1),
+	idx_base(-1),
+	idx_target(-1) {
+}
+
+IdxPair_::IdxPair_(int _this_idx, int _idx_base, int _idx_target)	:
+	this_idx(_this_idx),
+	idx_base(_idx_base),
+	idx_target(_idx_target) {
+}
+
+int IdxPair_::getBaseIdx(IdxPair p) {
+	return p->idx_base;
+}
+
+int IdxPair_::getTargetIdx(IdxPair p) {
+	return p->idx_target;
+}
+
 /*
  *	comparing func for distant data
  */
@@ -20,16 +40,19 @@ bool cmp_pair(IdxDistantPair a, IdxDistantPair b)
 /*
  *	K Nearest Neighbor algorithm
  */
-void knn(Mat& desp_base, Mat& desp_target, vector<IdxPair>& knn_pairs) {
+void knn(Mat& desp_base, Mat& desp_target, vector<IdxPair>& _knn_pairs) {
 #ifdef _DEBUG
 	clog << "[KNN_START] ";
 	auto tic = clock();
 #endif
 
-	knn_pairs = vector<IdxPair>(desp_base.rows * NUM_KNN);
+	const size_t length = desp_base.rows * NUM_KNN;
+	_knn_pairs = vector<IdxPair>(length);
 
 	// iter over each descriptor in base iamge
-	for (int i = 0, idx_in_knn_pair = 0; i < desp_base.rows; i++, idx_in_knn_pair += NUM_KNN) {
+	int idx_in_knn_pair = 0;
+
+	for (int i = 0; i < desp_base.rows; i++) {
 		vector<IdxDistantPair> distants(desp_target.rows);
 		const auto row_base = desp_base.row(i);
 
@@ -49,7 +72,8 @@ void knn(Mat& desp_base, Mat& desp_target, vector<IdxPair>& knn_pairs) {
 
 		// take k smallest
 		for (int j = 0; j < NUM_KNN; j++) {
-			knn_pairs[idx_in_knn_pair + j] = make_pair(i, distants[j].first);
+			_knn_pairs[idx_in_knn_pair] = new IdxPair_(idx_in_knn_pair, i, distants[j].first);
+			idx_in_knn_pair++;
 		}
 	}
 
