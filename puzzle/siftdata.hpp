@@ -11,13 +11,17 @@ public:
 	const bool is_empty = false;
 
 	SiftData();
-	SiftData(cv::InputArray image);
+	SiftData(cv::InputArray image, std::string image_name = "noname");
 
 	~SiftData();
 
 	void align_to(SiftData& target, cv::OutputArray affine);
 
 private:
+	std::string _name;
+	cv::Mat _image;
 	cv::Mat _descriptor;
 	std::vector<cv::KeyPoint> _keypoints;
+
+	void imshow(cv::InputArray image, std::string window_name = "non-specific");
 };
