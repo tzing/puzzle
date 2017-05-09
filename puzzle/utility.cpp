@@ -56,6 +56,11 @@ void projectPts(InputArray _affine, InputArray _points, OutputArray _points_proj
 	Mat points;
 	ensurePtShape(_points, points);
 
+	if (points.rows == 0) {
+		_points_projected.create(0, 2, CV_32FC1);
+		return;
+	}
+
 	assert(points.type() == CV_32FC1);
 	assert(points.cols == 2);
 
@@ -108,10 +113,10 @@ void projectImage(InputArray _affine, InputArray _source, InputOutputArray _canv
 
 	// limit project range
 	Mat canvas = _canvas.getMat();
-	r_min = max(r_min, 0);
-	c_min = max(c_min, 0);
-	r_max = min(r_max, canvas.rows);
-	c_max = min(c_max, canvas.cols);
+	r_min = min(max(r_min, 0), canvas.rows);
+	c_min = min(max(c_min, 0), canvas.cols);
+	r_max = max(min(r_max, canvas.rows), 0);
+	c_max = max(min(c_max, canvas.cols), 0);
 
 	// find corresponding range on source
 	vector<Point2f> pts_on_canvas;

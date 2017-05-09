@@ -95,7 +95,7 @@ int main(const int argc, char *const argv[]) {
 	dat_target.align_to(dat_sample, affine_target2sample);
 	auto aff_sample_to_target = affine_target2sample.inv();
 
-	vector<Mat> aff_puzzle_to_target;
+	vector<pair<Mat, Mat>> aff_puzzle_to_target; // affinity, image
 
 	for (auto& dat : dat_puzzles) {
 		// get affine matrix
@@ -103,7 +103,7 @@ int main(const int argc, char *const argv[]) {
 		dat.align_to(dat_sample, affine);
 
 		// save affine matrix
-		aff_puzzle_to_target.push_back(aff_sample_to_target *affine);
+		aff_puzzle_to_target.push_back(make_pair(aff_sample_to_target *affine, dat.image));
 	}
 
 #ifdef  __ENABLE_KEYPOINT
@@ -115,8 +115,8 @@ int main(const int argc, char *const argv[]) {
 #pragma region puzzle!
 	Mat result(img_target);
 
-	for (int i = 0; i < img_puzzles.size(); i++) {
-		projectImage(aff_puzzle_to_target[i], img_puzzles[i], result);
+	for (auto& data : aff_puzzle_to_target) {
+		projectImage(data.first, data.second, result);
 	}
 
 #pragma endregion
