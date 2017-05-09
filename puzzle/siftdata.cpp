@@ -9,10 +9,10 @@
 using namespace std;
 using namespace cv;
 
+bool is_good_point(Mat& img, KeyPoint& kp);
+
 // feature extractor
 static auto gExtractor = xfeatures2d::SiftDescriptorExtractor::create();
-
-#pragma region constructor / destructor
 
 /*
  *	constructor, made for `vector<MatWithDescriptor>` usage
@@ -27,11 +27,48 @@ SiftData::SiftData() : is_empty(true) {
  */
 SiftData::SiftData(InputArray _source, string name) {
 	assert(!_source.empty());
+	assert(_source.type() == CV_8UC3);
 
 	_name = name;
 	_source.copyTo(_image);
 
-	gExtractor->detectAndCompute(_source, noArray(), _keypoints, _descriptor);
+	vector<KeyPoint> keypoints;
+	Mat descriptor;
+	gExtractor->detectAndCompute(_source, noArray(), keypoints, descriptor);
+
+	// drop keypoint those located on blank area
+	vector<int> pass;
+
+	Mat img = _source.getMat();
+	for (int i = 0; i < keypoints.size(); i++) {
+		if (is_good_point(img, keypoints[i])) {
+			pass.push_back(i);
+		}
+	}
+
+	// save valid keypoint & descriptor
+	_keypoints = vector<KeyPoint>(pass.size());
+	_descriptor = Mat(pass.size(), 128, CV_32FC1);
+	for (int i = 0; i < pass.size(); i++) {
+		const int idx = pass[i];
+		_keypoints[i] = keypoints[idx];
+		descriptor.row(idx).copyTo(_descriptor.row(i));
+	}
+
+#ifdef __ENABLE_KEYPOINT
+	// draw keypoint
+	Mat cavnas;
+	drawKeypoints(_source, _keypoints, cavnas, Scalar(0, 0, 255));
+
+	// show image
+	string window_name = name + ": keypoint";
+	cv::imshow(window_name, cavnas);
+
+	// wait & destory window
+	clog << "PAUSED. press to cont." << endl;
+	waitKey();
+	destroyWindow(window_name);
+#endif // __ENABLE_KEYPOINT
 }
 
 /*
@@ -44,7 +81,6 @@ SiftData::~SiftData() {
 	_keypoints.clear();
 }
 
-#pragma endregion
 /*
  * align image
  */
