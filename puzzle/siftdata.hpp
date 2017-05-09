@@ -22,6 +22,4 @@ private:
 	cv::Mat _image;
 	cv::Mat _descriptor;
 	std::vector<cv::KeyPoint> _keypoints;
-
-	void imshow(cv::InputArray image, std::string window_name = "non-specific");
 };
