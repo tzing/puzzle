@@ -1,6 +1,4 @@
 #include "knn.hpp"
-#include <iostream>
-#include <ctime>
 
 #define NUM_KNN (1)		// num of k
 
@@ -41,11 +39,6 @@ bool cmp_pair(IdxDistantPair a, IdxDistantPair b)
  *	K Nearest Neighbor algorithm
  */
 void knn(Mat& desp_base, Mat& desp_target, vector<IdxPair>& _knn_pairs) {
-#ifdef _DEBUG
-	clog << "[KNN_START] ";
-	auto tic = clock();
-#endif
-
 	const size_t length = desp_base.rows * NUM_KNN;
 	_knn_pairs = vector<IdxPair>(length);
 
@@ -76,9 +69,4 @@ void knn(Mat& desp_base, Mat& desp_target, vector<IdxPair>& _knn_pairs) {
 			idx_in_knn_pair++;
 		}
 	}
-
-#ifdef _DEBUG
-	auto toc = clock();
-	clog << "[KNN_FINISH] " << (float)(toc - tic) / CLOCKS_PER_SEC << "sec elasped" << endl;
-#endif
 }

@@ -77,36 +77,20 @@ int main(const int argc, char *const argv[]) {
 #pragma endregion
 
 #pragma region feature extraction
-	clog << "extracting feature";
 	SiftData dat_sample(img_sample, "sample");
-	clog.put('.');
-
 	SiftData dat_target(img_target, "target");
-	clog.put('.');
 
 	vector<SiftData> dat_puzzles;
 	int c = 1;
 	for (auto& img : img_puzzles) {
-		dat_puzzles.push_back(SiftData(img, "puzzle"));
-		clog.put('.');
+		char title[10];
+		sprintf_s(title, "puzzle%d", c++);
+		dat_puzzles.push_back(SiftData(img, title));
 	}
-
-	clog << endl;
-
-#ifdef  __ENABLE_KEYPOINT
-	waitKey();
-#endif //  __ENABLE_KEYPOINT
 
 #pragma endregion
 
 #pragma region alignment
-
-	clog << "aligning";
-
-	//Mat aff_sample_to_target;
-	//dat_sample.align_to(dat_target, aff_sample_to_target);
-	//clog.put('.');
-
 	Mat affine_target2sample;
 	dat_target.align_to(dat_sample, affine_target2sample);
 	auto aff_sample_to_target = affine_target2sample.inv();
@@ -120,11 +104,7 @@ int main(const int argc, char *const argv[]) {
 
 		// save affine matrix
 		aff_puzzle_to_target.push_back(aff_sample_to_target *affine);
-
-		clog.put('.');
 	}
-
-	clog << endl;
 
 #ifdef  __ENABLE_KEYPOINT
 	waitKey();
@@ -134,8 +114,6 @@ int main(const int argc, char *const argv[]) {
 
 #pragma region puzzle!
 	Mat result(img_target);
-
-	//projectImage(aff_sample_to_target, img_sample, result);
 
 	for (int i = 0; i < img_puzzles.size(); i++) {
 		projectImage(aff_puzzle_to_target[i], img_puzzles[i], result);

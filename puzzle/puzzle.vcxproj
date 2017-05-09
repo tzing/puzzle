@@ -121,7 +121,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="keypoint.cpp" />
     <ClCompile Include="knn.cpp" />
+    <ClCompile Include="log.cpp" />
     <ClCompile Include="ransac.cpp" />
     <ClCompile Include="siftdata.cpp" />
     <ClCompile Include="getopt.cpp" />
@@ -130,6 +132,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="knn.hpp" />
+    <ClInclude Include="log.hpp" />
     <ClInclude Include="ransac.hpp" />
     <ClInclude Include="siftdata.hpp" />
     <ClInclude Include="getopt.hpp" />

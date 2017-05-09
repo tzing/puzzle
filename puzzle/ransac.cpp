@@ -1,7 +1,5 @@
 #include "ransac.hpp"
 #include <algorithm>
-#include <iostream>
-#include <ctime>
 #include "utility.hpp"
 
 #define RANSAC_ROUND			(1000)				// round of RANSAC
@@ -64,11 +62,6 @@ void calc_homography(InputArray _kp_base, InputArray _kp_target, OutputArray aff
  * ransac func
  */
 void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPoint>& kp_target, OutputArray _best_affine, vector<IdxPair>& _selected_pair) {
-#ifdef _DEBUG
-	clog << "[RANSAC_START] ";
-	auto tic = clock();
-#endif
-
 	assert(_knn_pairs.size() > 0);
 	assert(kp_base.size() > 0);
 	assert(kp_target.size() > 0);
@@ -135,9 +128,4 @@ void ransac(vector<IdxPair>& _knn_pairs, vector<KeyPoint>& kp_base, vector<KeyPo
 
 	best_affine.copyTo(_best_affine);
 	_selected_pair = selected_pairs;
-
-#ifdef _DEBUG
-	auto toc = clock();
-	clog << "[RANSAC_FINISH] " << (float)(toc - tic) / CLOCKS_PER_SEC << "sec elasped, with score=" << selected_pairs.size() << " in " << _knn_pairs.size() << endl;
-#endif
 }

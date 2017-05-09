@@ -9,6 +9,7 @@ class SiftData
 {
 public:
 	const bool is_empty = false;
+	const cv::Mat image;
 
 	SiftData();
 	SiftData(cv::InputArray image, std::string image_name = "noname");
@@ -19,7 +20,6 @@ public:
 
 private:
 	std::string _name;
-	cv::Mat _image;
 	cv::Mat _descriptor;
 	std::vector<cv::KeyPoint> _keypoints;
 };

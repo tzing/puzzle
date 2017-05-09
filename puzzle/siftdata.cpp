@@ -5,6 +5,7 @@
 #include "knn.hpp"
 #include "ransac.hpp"
 #include "utility.hpp"
+#include "log.hpp"
 
 using namespace std;
 using namespace cv;
@@ -25,13 +26,18 @@ SiftData::SiftData() : is_empty(true) {
  *
  * input cv::Mat and compute descriptor
  */
-SiftData::SiftData(InputArray _source, string name) {
+SiftData::SiftData(InputArray _source, string name) : image(_source.getMat()) {
 	assert(!_source.empty());
 	assert(_source.type() == CV_8UC3);
 
-	_name = name;
-	_source.copyTo(_image);
+	// log
+	log("extract feature from " + name);
 
+	// assign variable
+	_name = name;
+	_source.copyTo(image);
+
+	// extract feature
 	vector<KeyPoint> keypoints;
 	Mat descriptor;
 	gExtractor->detectAndCompute(_source, noArray(), keypoints, descriptor);
@@ -65,7 +71,6 @@ SiftData::SiftData(InputArray _source, string name) {
 	cv::imshow(window_name, cavnas);
 
 	// wait & destory window
-	clog << "PAUSED. press to cont." << endl;
 	waitKey();
 	destroyWindow(window_name);
 #endif // __ENABLE_KEYPOINT
@@ -76,7 +81,6 @@ SiftData::SiftData(InputArray _source, string name) {
  */
 SiftData::~SiftData() {
 	_name.clear();
-	_image.release();
 	_descriptor.release();
 	_keypoints.clear();
 }
@@ -87,12 +91,19 @@ SiftData::~SiftData() {
 void SiftData::align_to(SiftData& target, OutputArray affine) {
 	assert(!is_empty);
 	assert(!target.is_empty);
+	
+	// log
+	log("aligning " + _name +" -> " + target._name);
 
 	// calc knn
+	logd("[KNN] start");
 	vector<IdxPair> neighbors;
 	knn((*this)._descriptor, target._descriptor, neighbors);
+	logd("[KNN] finish", true);
 
 	// run ransac
+	logd("[RANSAC] start");
 	vector<IdxPair> select_pairs;
 	ransac(neighbors, (*this)._keypoints, target._keypoints, affine, select_pairs);
+	logd("[RANSAC] finish", true);
 }
