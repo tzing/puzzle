@@ -5,11 +5,25 @@ using namespace cv;
 
 static const Vec3b BLACK(0, 0, 0);
 
+inline int select_min(int base, float cmper) {
+	int num_cmper = cmper;
+	return base < num_cmper ? base : num_cmper;
+}
+
+inline int select_max(int base, float cmper) {
+	int num_cmper = cmper + .5;
+	return base > num_cmper ? base : num_cmper;
+}
+
 /*
  * reshape point matrix
  */
 void ensurePtShape(InputArray _src, OutputArray _dest) {
 	Mat points = _src.getMat();
+	if (points.rows == 0) {
+		_dest.create(0, 2, CV_32FC1);
+		return;
+	}
 
 	if (points.rows == 1) {
 		points = points.t();
@@ -69,35 +83,82 @@ void projectImage(InputArray _affine, InputArray _source, InputOutputArray _canv
 	assert(_source.type() == CV_8UC3);
 	assert(_canvas.type() == CV_8UC3);
 
-	// find non-black part on
 	Mat source = _source.getMat();
-	vector<Point2f> pts_on_source;
 
-	for (int i = 0; i < source.rows; i++) {
-		for (int j = 0; j < source.cols; j++) {
-			if (source.at<Vec3b>(i, j) != BLACK) {
-				pts_on_source.push_back(Point2f(j, i));
-			}
+	// find projection range
+	vector<Point2f> cnr_source = {
+		Point2f(0,0),
+		Point2f(source.cols,0),
+		Point2f(source.cols,source.rows),
+		Point2f(0,source.rows)
+	};
+
+	Mat cnr_on_canvas;
+	projectPts(_affine, cnr_source, cnr_on_canvas);
+
+	int r_min = INT_MAX, c_min = INT_MAX;
+	int r_max = INT_MIN, c_max = INT_MIN;
+
+	for (int i = 0; i < cnr_on_canvas.rows; i++) {
+		r_min = select_min(r_min, cnr_on_canvas.at<float>(i, 1));
+		c_min = select_min(c_min, cnr_on_canvas.at<float>(i, 0));
+		r_max = select_max(r_max, cnr_on_canvas.at<float>(i, 1));
+		c_max = select_max(c_max, cnr_on_canvas.at<float>(i, 0));
+	}
+
+	// limit project range
+	Mat canvas = _canvas.getMat();
+	r_min = max(r_min, 0);
+	c_min = max(c_min, 0);
+	r_max = min(r_max, canvas.rows);
+	c_max = min(c_max, canvas.cols);
+
+	// find corresponding range on source
+	vector<Point2f> pts_on_canvas;
+	for (int r = r_min; r < r_max; r++) {
+		for (int c = c_min; c < c_max; c++) {
+			pts_on_canvas.push_back(Point2f(c, r));
 		}
 	}
 
-	// project points
-	Mat pts_projected;
-	projectPts(_affine, Mat(pts_on_source).reshape(1), pts_projected);
+	Mat pts_on_source;
+	Mat rev_affine = _affine.getMat().inv();
+	projectPts(rev_affine, pts_on_canvas, pts_on_source);
 
-	// copy pixel
-	Mat canvas = _canvas.getMat();
-	for (int i = 0; i < pts_projected.rows; i++) {
-		int r_target = pts_projected.at<float>(i, 1);
-		int c_target = pts_projected.at<float>(i, 0);
-		if (c_target < 0 || r_target < 0 || r_target >= canvas.rows || c_target >= canvas.cols) {
+	// project image
+	for (int i = 0; i < pts_on_canvas.size(); i++) {
+		// get source index
+		const int r = pts_on_source.at<float>(i, 1);
+		if (r < 0 || r >= source.rows) {
 			continue;
 		}
 
-		int r_source = pts_on_source[i].y;
-		int c_source = pts_on_source[i].x;
+		const auto c_source = pts_on_source.at<float>(i, 0);
+		if (c_source < 0 || c_source >= source.cols) {
+			continue;
+		}
 
-		canvas.at<Vec3b>(r_target, c_target) = source.at<Vec3b>(r_source, c_source);
+		// dump when source is black
+		if (source.at<Vec3b>(r, c_source) == BLACK) {
+			continue;
+		}
+
+		// estimate value: linear
+		const int c_left = c_source;
+		const int c_right = c_left + 1;
+
+		const auto val_L = source.at<Vec3b>(r, c_left);
+		const auto val_R = source.at<Vec3b>(r, c_right);
+		const auto dif = c_source - c_left;
+
+		auto val = val_L * (1.0 - dif) + val_R*dif;
+
+		// set value
+		auto pt_target = pts_on_canvas[i];
+		int r_target = pt_target.y;
+		int c_target = pt_target.x;
+
+		canvas.at<Vec3b>(r_target, c_target) = val;
 	}
 
 	canvas.copyTo(_canvas);
