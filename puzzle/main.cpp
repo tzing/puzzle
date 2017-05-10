@@ -113,16 +113,22 @@ int main(const int argc, char *const argv[]) {
 #pragma endregion
 
 #pragma region puzzle!
+	clog << "projecting image";
 	Mat result(img_target);
 
 	for (auto& data : aff_puzzle_to_target) {
 		projectImage(data.first, data.second, result);
+		clog << ".";
 	}
+
+	clog << endl;
 
 #pragma endregion
 
-	// output
+#pragma region output
+	imwrite(filename_output, result);
 	imshow("result", result);
 	clog << "done! press any key to continue" << endl;
 	waitKey();
+#pragma endregion
 }

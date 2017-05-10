@@ -40,7 +40,11 @@ SiftData::SiftData(InputArray _source, string name) : image(_source.getMat()) {
 
 	// blur
 	Mat sift_img;
+#ifdef _USE_BLUR
 	blur(_source, sift_img);
+#else
+	sift_img = _source.getMat();
+#endif // _USE_BLUR
 
 	// extract feature
 	vector<KeyPoint> keypoints;
