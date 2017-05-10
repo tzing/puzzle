@@ -11,6 +11,7 @@ using namespace std;
 using namespace cv;
 
 bool is_good_point(Mat& img, KeyPoint& kp);
+void blur(InputArray _src, OutputArray _dst);
 
 // feature extractor
 static auto gExtractor = xfeatures2d::SiftDescriptorExtractor::create();
@@ -37,10 +38,14 @@ SiftData::SiftData(InputArray _source, string name) : image(_source.getMat()) {
 	_name = name;
 	_source.copyTo(image);
 
+	// blur
+	Mat sift_img;
+	blur(_source, sift_img);
+
 	// extract feature
 	vector<KeyPoint> keypoints;
 	Mat descriptor;
-	gExtractor->detectAndCompute(_source, noArray(), keypoints, descriptor);
+	gExtractor->detectAndCompute(sift_img, noArray(), keypoints, descriptor);
 
 	// drop keypoint those located on blank area
 	vector<int> pass;
