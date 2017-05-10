@@ -1,6 +1,6 @@
 #include "knn.hpp"
 
-#define NUM_KNN (1)		// num of k
+constexpr int NUM_KNN = 1;		// num of k
 
 using namespace std;
 using namespace cv;

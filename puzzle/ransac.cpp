@@ -2,13 +2,13 @@
 #include <algorithm>
 #include "utility.hpp"
 
-#define RANSAC_ROUND			(1000)				// round of RANSAC
+constexpr int RANSAC_ROUND = 10000;			// round of RANSAC
 
-#define NUM_REQ_HOMOGRAPHY		(4)					// required points to build a homography
-#define HOMOGRAPHY_H_HEIGHT (NUM_REQ_HOMOGRAPHY<<1)	// height of H when build homography
-#define HOMOGRAPHY_H_WIDTH		(9)					// width of H when build homography
+constexpr int NUM_REQ_HOMOGRAPHY = 4;		// required points to build a homography
+constexpr int HOMOGRAPHY_H_HEIGHT = NUM_REQ_HOMOGRAPHY << 1;	// height of H when build homography
+constexpr int HOMOGRAPHY_H_WIDTH = 9;		// width of H when build homography
 
-#define THRESHOLD_GOODRESULT	(5)					// distance less this threshold would consider as good match result
+constexpr int THRESHOLD_GOODRESULT = 5;		// distance less this threshold would consider as good match result
 
 using namespace std;
 using namespace cv;

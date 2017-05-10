@@ -4,7 +4,7 @@
 using namespace std;
 using namespace cv;
 
-#define THRESHOLD_BLACK (2)
+constexpr uchar THRESHOLD_BLACK = 2;
 
 bool is_good_point(Mat& img, KeyPoint& kp) {
 	assert(img.type() == CV_8UC3);
