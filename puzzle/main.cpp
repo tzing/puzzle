@@ -106,10 +106,6 @@ int main(const int argc, char *const argv[]) {
 		aff_puzzle_to_target.push_back(make_pair(aff_sample_to_target *affine, dat.image));
 	}
 
-#ifdef  __ENABLE_KEYPOINT
-	waitKey();
-#endif //  __ENABLE_KEYPOINT
-
 #pragma endregion
 
 #pragma region puzzle!
