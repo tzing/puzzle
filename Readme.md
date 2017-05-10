@@ -14,3 +14,14 @@ dev under
 with environment variable
 
 - `%OpenCV320%` path to OpenCV 3.2.0 build directory
+
+## Execute
+
+```
+PROG [-s sample] [-t target] [-o output] puzzle [puzzle...]
+```
+
+- `-s` *(sample)* path to sample image
+- `-t` *(target)* path to target image
+- `-o` *(output, optional)* specific output filename
+- `puzzle` path to puzzle images
