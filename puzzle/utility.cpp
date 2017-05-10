@@ -5,14 +5,12 @@ using namespace cv;
 
 static const Vec3b BLACK(0, 0, 0);
 
-inline int select_min(int base, float cmper) {
-	int num_cmper = cmper;
-	return base < num_cmper ? base : num_cmper;
+constexpr int select_min(int base, float cmper) {
+	return base < cmper ? base : cmper;
 }
 
-inline int select_max(int base, float cmper) {
-	int num_cmper = cmper + .5;
-	return base > num_cmper ? base : num_cmper;
+constexpr int select_max(int base, float cmper) {
+	return base > cmper ? base : (cmper + .5);
 }
 
 /*
@@ -131,37 +129,48 @@ void projectImage(InputArray _affine, InputArray _source, InputOutputArray _canv
 	projectPts(rev_affine, pts_on_canvas, pts_on_source);
 
 	// project image
-	for (int i = 0; i < pts_on_canvas.size(); i++) {
+	const int length = pts_on_canvas.size();
+
+	#pragma omp parallel for
+	for (int i = 0; i < length; i++) {
 		// get source index
-		const int r = pts_on_source.at<float>(i, 1);
-		if (r < 0 || r >= source.rows) {
+		const auto r_source = pts_on_source.at<float>(i, 1);
+		const int r_up = r_source;
+		const int r_bottom = r_up + 1;
+		if (r_up < 0 || r_bottom >= source.rows) {
 			continue;
 		}
 
 		const auto c_source = pts_on_source.at<float>(i, 0);
-		if (c_source < 0 || c_source >= source.cols) {
+		const int c_left = c_source;
+		const int c_right = c_left + 1;
+		if (c_left < 0 || c_right >= source.cols) {
 			continue;
 		}
 
 		// dump when source is black
-		if (source.at<Vec3b>(r, c_source) == BLACK) {
+		if (source.at<Vec3b>(r_up, c_left) == BLACK) {
 			continue;
 		}
 
-		// estimate value: linear
-		const int c_left = c_source;
-		const int c_right = c_left + 1;
+		// estimate value: bilinear
+		const auto difX = c_source - c_left;
 
-		const auto val_L = source.at<Vec3b>(r, c_left);
-		const auto val_R = source.at<Vec3b>(r, c_right);
-		const auto dif = c_source - c_left;
+		const auto val_UL = source.at<Vec3b>(r_up, c_left);
+		const auto val_UR = source.at<Vec3b>(r_up, c_right);
+		const auto val_U = val_UL * (1.0 - difX) + val_UR * difX;
 
-		auto val = val_L * (1.0 - dif) + val_R*dif;
+		const auto val_BL = source.at<Vec3b>(r_bottom, c_left);
+		const auto val_BR = source.at<Vec3b>(r_bottom, c_right);
+		const auto val_B = val_BL * (1.0 - difX) + val_BR * difX;
+
+		const auto difY = r_source - r_up;
+		const auto val = val_U * (1.0 - difY) + val_B * difY;
 
 		// set value
-		auto pt_target = pts_on_canvas[i];
-		int r_target = pt_target.y;
-		int c_target = pt_target.x;
+		const auto pt_target = pts_on_canvas[i];
+		const int r_target = pt_target.y;
+		const int c_target = pt_target.x;
 
 		canvas.at<Vec3b>(r_target, c_target) = val;
 	}
